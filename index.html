@@ -1,0 +1,104 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>AI Drug Discovery Platform - Revolutionizing Medicine with Generative AI</title>
+    <meta name="description" content="Accelerate pharmaceutical research by 10x using advanced AI models to design, predict, and optimize drug molecules. Discover breakthrough medicines faster with VAEs, GANs, and molecular analysis." />
+    <meta name="keywords" content="AI drug discovery, molecular design, pharmaceutical AI, VAE, GAN, RDKit, DeepChem, AutoDock Vina, SMILES, medicine development" />
+    <meta name="author" content="AI Drug Discovery Platform" />
+
+    <meta property="og:title" content="AI Drug Discovery Platform - Revolutionizing Medicine with Generative AI" />
+    <meta property="og:description" content="Accelerate pharmaceutical research by 10x using advanced AI models to design, predict, and optimize drug molecules faster than ever before." />
+    <meta property="og:type" content="website" />
+    <meta property="og:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:site" content="@lovable_dev" />
+    <meta name="twitter:image" content="https://lovable.dev/opengraph-image-p98pqg.png" />
+  </head>
+
+  <body>
+    <div id="root">
+      <h1>SMILES Analysis</h1>
+      <form id="smilesForm">
+        <label for="smiles">Enter SMILES:</label>
+        <input type="text" id="smiles" name="smiles" required />
+        <label for="description">Description:</label>
+        <input type="text" id="description" name="description" />
+        <button type="submit">Submit</button>
+      </form>
+      <div id="response"></div>
+    </div>
+    <script>
+      const form = document.getElementById('smilesForm');
+      form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const smiles = document.getElementById('smiles').value;
+        const description = document.getElementById('description').value;
+
+        const response = await fetch('/api/smiles', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ smiles, description }),
+        });
+
+        const result = await response.json();
+        document.getElementById('response').innerText = JSON.stringify(result, null, 2);
+      });
+    </script>
+    <script type="module" src="/src/main.tsx"></script>
+    <script>
+      const express = require('express');
+      const mongoose = require('mongoose');
+      const bodyParser = require('body-parser');
+
+      const app = express();
+      const PORT = process.env.PORT || 3000;
+
+      // Middleware
+      app.use(bodyParser.json());
+
+      // MongoDB Connection
+      const mongoURI = 'mongodb://localhost:27017/smilesDB'; // Replace with your MongoDB URI
+      mongoose.connect(mongoURI, { useNewUrlParser: true, useUnifiedTopology: true })
+        .then(() => console.log('Connected to MongoDB'))
+        .catch(err => console.error('MongoDB connection error:', err));
+
+      // Define SMILES Schema
+      const smilesSchema = new mongoose.Schema({
+        smiles: { type: String, required: true },
+        description: String,
+        createdAt: { type: Date, default: Date.now },
+      });
+
+      const SMILES = mongoose.model('SMILES', smilesSchema);
+
+      // Routes
+      app.post('/api/smiles', async (req, res) => {
+        try {
+          const { smiles, description } = req.body;
+          const newSmiles = new SMILES({ smiles, description });
+          await newSmiles.save();
+          res.status(201).json({ message: 'SMILES saved successfully', data: newSmiles });
+        } catch (err) {
+          res.status(500).json({ error: 'Failed to save SMILES', details: err.message });
+        }
+      });
+
+      app.get('/api/smiles', async (req, res) => {
+        try {
+          const smilesList = await SMILES.find();
+          res.status(200).json(smilesList);
+        } catch (err) {
+          res.status(500).json({ error: 'Failed to fetch SMILES', details: err.message });
+        }
+      });
+
+      // Start the Server
+      app.listen(PORT, () => {
+        console.log(`Server is running on http://localhost:${PORT}`);
+      });
+    </script>
+  </body>
+</html>
